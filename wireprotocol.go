@@ -181,6 +181,10 @@ type wireProtocol struct {
 
 	// Time Zone
 	timezone string
+
+	// Skip database-level triggers (ON CONNECT, ON TRANSACTION START, ...)
+	// for this attachment via isc_dpb_no_db_triggers.
+	noDbTriggers bool
 }
 
 func newWireProtocol(addr string, timezone string, charset string) (*wireProtocol, error) {
@@ -798,6 +802,17 @@ func (p *wireProtocol) opCreate(dbName string, user string, password string, rol
 	return err
 }
 
+// appendNoDbTriggersDPB adds isc_dpb_no_db_triggers when the no_db_triggers
+// connection option is set, so the server does not fire database-level
+// triggers (e.g. ON CONNECT) for this attachment. The server only honours it
+// for SYSDBA / the database owner (Firebird 4+: IGNORE_DB_TRIGGERS privilege).
+func (p *wireProtocol) appendNoDbTriggersDPB(dpb []byte) []byte {
+	if !p.noDbTriggers {
+		return dpb
+	}
+	return append(dpb, isc_dpb_no_db_triggers, 1, 1)
+}
+
 func (p *wireProtocol) opAttach(dbName string, user string, password string, role string) error {
 	p.debugPrint("opAttach")
 	encode := bytes.NewBufferString(p.charset).Bytes()
@@ -828,6 +843,8 @@ func (p *wireProtocol) opAttach(dbName string, user string, password string, rol
 		[]byte{isc_dpb_process_name, byte(len(processNameBytes))}, processNameBytes,
 		[]byte{isc_dpb_utf8_filename, 1, 1},
 	}, nil)
+
+	dpb = p.appendNoDbTriggersDPB(dpb)
 
 	if p.authData != nil {
 		specificAuthData := bytes.NewBufferString(hex.EncodeToString(p.authData)).Bytes()

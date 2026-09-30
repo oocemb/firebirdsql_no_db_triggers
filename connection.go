@@ -152,6 +152,7 @@ func newFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
 		return
 	}
 
+	wp.noDbTriggers = convertToBool(dsn.options["no_db_triggers"], false)
 	err = wp.opAttach(dsn.dbName, dsn.user, dsn.passwd, dsn.options["role"])
 	if err != nil {
 		return

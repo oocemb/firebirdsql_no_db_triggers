@@ -79,6 +79,7 @@ func parseDSN(dsns string) (*firebirdDsn, error) {
 		"auth_plugin_name":     "Srp256",
 		"charset":              "UTF8",
 		"column_name_to_lower": "false",
+		"no_db_triggers":       "false",
 		"role":                 "",
 		"timezone":             "",
 		"wire_crypt":           "true",
