@@ -128,6 +128,10 @@ type wireProtocol struct {
 	osUser        string
 	hostName      string
 
+	// Skip database-level triggers (ON CONNECT, ON TRANSACTION START, ...)
+	// for this attachment via isc_dpb_no_db_triggers.
+	noDbTriggers bool
+
 	// Protocol 18/19 execute trailers and inline blob support.
 	cursorFlags       int32
 	maxInlineBlobSize int32
@@ -1265,6 +1269,17 @@ func (p *wireProtocol) appendClientInfoDPB(dpb []byte) []byte {
 	return dpb
 }
 
+// appendNoDbTriggersDPB adds isc_dpb_no_db_triggers when the no_db_triggers
+// connection option is set, so the server does not fire database-level
+// triggers (e.g. ON CONNECT) for this attachment. The server only honours it
+// for SYSDBA / the database owner (Firebird 4+: IGNORE_DB_TRIGGERS privilege).
+func (p *wireProtocol) appendNoDbTriggersDPB(dpb []byte) []byte {
+	if !p.noDbTriggers {
+		return dpb
+	}
+	return append(dpb, isc_dpb_no_db_triggers, 1, 1)
+}
+
 func (p *wireProtocol) opAttach(dbName string, user string, password string, role string) error {
 	p.debugPrint("opAttach")
 	encode := []byte(p.charset)
@@ -1311,6 +1326,7 @@ func (p *wireProtocol) opAttach(dbName string, user string, password string, rol
 	}, nil)
 
 	dpb = p.appendClientInfoDPB(dpb)
+	dpb = p.appendNoDbTriggersDPB(dpb)
 	dpb = p.appendAuthAndTimezone(dpb)
 	dpb = p.appendInlineBlobDPB(dpb)
 

@@ -171,6 +171,7 @@ func openFirebirdsqlConnWithWire(dsn *firebirdDsn, dbOp func(*wireProtocol) erro
 	wp.clientVersion = dsn.options["client_version"]
 	wp.osUser = dsn.options["os_user"]
 	wp.hostName = dsn.options["host_name"]
+	wp.noDbTriggers = convertToBool(dsn.options["no_db_triggers"], false)
 	wp.maxInlineBlobSize = int32(parseOptionInt(dsn.options["max_inline_blob_size"], 65536))
 	wp.maxBlobCacheSize = int32(parseOptionInt(dsn.options["max_blob_cache_size"], 10485760))
 	wp.inlineBlobCache = newInlineBlobCache(int(wp.maxBlobCacheSize))

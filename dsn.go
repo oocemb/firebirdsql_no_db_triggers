@@ -89,6 +89,7 @@ func parseDSN(dsns string) (*firebirdDsn, error) {
 		"client_version":       "",
 		"column_name_to_lower": "false",
 		"host_name":            "",
+		"no_db_triggers":       "false",
 		"os_user":              "",
 		"role":                 "",
 		"timezone":             "",
